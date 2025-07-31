@@ -7,3 +7,7 @@ services:
       - "53:53/udp"
       - "53:53/tcp"
       - "8081:8081"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./conf:/etc/powerdns
+

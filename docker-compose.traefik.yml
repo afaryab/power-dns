@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  powerdns:
+    build: .
+    container_name: powerdns
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./conf:/etc/powerdns
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.powerdns.rule=Host(`pdns.localhost`)"
+      - "traefik.http.routers.powerdns.entrypoints=web"
+      - "traefik.http.services.powerdns.loadbalancer.server.port=8081"
+
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
