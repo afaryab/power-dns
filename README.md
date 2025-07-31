@@ -28,8 +28,27 @@ docker-compose up --build
 - MariaDB data is stored in `./mysql`
 - PowerDNS config is stored in `./conf`
 
+## Configuration
+
+### Environment Variables
+You can customize PowerDNS and MariaDB settings using environment variables. Create a `.env` file or set them directly in `docker-compose.yml`:
+
+```bash
+# MariaDB Configuration
+MYSQL_ROOT_PASSWORD=root_pass
+MYSQL_DATABASE=pdns
+MYSQL_USER=pdns
+MYSQL_PASSWORD=pdns_pass
+
+# PowerDNS Configuration
+PDNS_API_KEY=changeme
+PDNS_WEBSERVER_PORT=8081
+PDNS_WEBSERVER_ADDRESS=0.0.0.0
+PDNS_WEBSERVER_ALLOW_FROM=0.0.0.0/0
+```
+
 ### 4. Customizing PowerDNS
-Edit `conf/pdns.conf` or the `entrypoint.sh` script to change PowerDNS settings.
+Edit the `.env` file to change database credentials, API key, or webserver settings. The entrypoint script will automatically configure PowerDNS with these values.
 
 ## Example: Docker Compose with Traefik
 Below is a sample `docker-compose.traefik.yml` for running PowerDNS behind Traefik:
