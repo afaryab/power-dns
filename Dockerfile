@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies and PowerDNS repo
 RUN apt-get update && \
-    apt-get install -y curl lsb-release gnupg mariadb-server mariadb-client && \
+    apt-get install -y curl lsb-release gnupg mysql-client && \
     curl -fsSL https://repo.powerdns.com/FD380FBB-pub.asc | gpg --dearmor -o /usr/share/keyrings/pdns-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/pdns-archive-keyring.gpg arch=amd64] http://repo.powerdns.com/ubuntu $(lsb_release -cs)-auth-47 main" > /etc/apt/sources.list.d/pdns.list && \
     apt-get update && \

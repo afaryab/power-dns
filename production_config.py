@@ -1,0 +1,95 @@
+import os
+
+# Basic config
+SECRET_KEY = os.environ.get('SECRET_KEY', 'supersecretkey')
+BIND_ADDRESS = '0.0.0.0'
+PORT = 80
+
+# Database config
+SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://pdns:pdnspassword@pdnsdb/powerdns')
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# PowerDNS API config
+PDNS_STATS_URL = os.environ.get('PDNS_API_URL', 'http://pdnsapp:8081')
+PDNS_API_KEY = os.environ.get('PDNS_API_KEY', 'changeme')
+PDNS_VERSION = '4.5.3'
+
+# Session config
+SESSION_TYPE = 'filesystem'
+SESSION_PERMANENT = False
+SESSION_USE_SIGNER = True
+SESSION_KEY_PREFIX = 'powerdns-admin:'
+SESSION_FILE_DIR = '/tmp/powerdns-admin-sessions'
+
+# Security settings
+SIGNUP_ENABLED = False
+LOGIN_LDAP_FIRST = False
+BASIC_ENABLED = True
+SAML_ENABLED = False
+OIDC_OAUTH_ENABLED = False
+GITHUB_OAUTH_ENABLED = False
+GOOGLE_OAUTH_ENABLED = False
+
+# Disable OTP by default
+OTP_ENABLED = os.environ.get('OTP_ENABLED', 'false').lower() == 'true'
+
+# LDAP configuration (disabled)
+LDAP_TYPE = 'ldap'
+LDAP_URI = None
+LDAP_BASE_DN = None
+LDAP_ADMIN_USERNAME = None
+LDAP_ADMIN_PASSWORD = None
+LDAP_FILTER_BASIC = None
+LDAP_FILTER_USERNAME = None
+LDAP_FILTER_GROUP = None
+LDAP_FILTER_GROUPNAME = None
+LDAP_SEARCH_BIND = False
+LDAP_USERNAMEFIELD = 'uid'
+LDAP_FIRSTNAME_FIELD = 'givenName'
+LDAP_SURNAME_FIELD = 'sn'
+LDAP_EMAIL_FIELD = 'mail'
+LDAP_GROUP_SECURITY_ENABLED = False
+
+# SAML configuration (disabled)
+SAML_ENABLED = False
+SAML_DEBUG = False
+SAML_PATH = None
+SAML_METADATA_URL = None
+SAML_METADATA_CACHE_LIFETIME = None
+SAML_IDP_SSO_BINDING = None
+SAML_IDP_ENTITY_ID = None
+SAML_NAMEID_FORMAT = None
+SAML_SP_ENTITY_ID = None
+SAML_SP_CONTACT_NAME = None
+SAML_SP_CONTACT_MAIL = None
+SAML_SIGN_REQUEST = False
+SAML_WANT_MESSAGE_SIGNED = False
+SAML_LOGOUT = False
+SAML_LOGOUT_URL = None
+
+# OIDC configuration (disabled)
+OIDC_OAUTH_ENABLED = False
+OIDC_OAUTH_KEY = None
+OIDC_OAUTH_SECRET = None
+OIDC_OAUTH_SCOPE = None
+OIDC_OAUTH_API_URL = None
+OIDC_OAUTH_TOKEN_URL = None
+OIDC_OAUTH_AUTHORIZE_URL = None
+
+# GitHub OAuth (disabled)
+GITHUB_OAUTH_ENABLED = False
+GITHUB_OAUTH_KEY = None
+GITHUB_OAUTH_SECRET = None
+GITHUB_OAUTH_SCOPE = None
+GITHUB_OAUTH_API_URL = None
+GITHUB_OAUTH_TOKEN_URL = None
+GITHUB_OAUTH_AUTHORIZE_URL = None
+
+# Google OAuth (disabled)
+GOOGLE_OAUTH_ENABLED = False
+GOOGLE_OAUTH_CLIENT_ID = None
+GOOGLE_OAUTH_CLIENT_SECRET = None
+GOOGLE_OAUTH_SCOPE = None
+GOOGLE_OAUTH_API_URL = None
+GOOGLE_OAUTH_TOKEN_URL = None
+GOOGLE_OAUTH_AUTHORIZE_URL = None

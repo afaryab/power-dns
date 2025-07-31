@@ -1,0 +1,130 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        python3 \
+        python3-pip \
+        python3-dev \
+        python3-venv \
+        git \
+        curl \
+        build-essential \
+        libmariadb-dev \
+        libmariadb-dev-compat \
+        libldap2-dev \
+        libsasl2-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+# Clone PowerDNS-Admin
+WORKDIR /opt
+RUN git clone https://github.com/ngoduykhanh/PowerDNS-Admin.git powerdns-admin
+
+WORKDIR /opt/powerdns-admin
+
+# Install Python dependencies (skip PostgreSQL packages)
+RUN pip3 install --upgrade pip && \
+    pip3 install pymysql mysqlclient && \
+    apt-get update && \
+    apt-get install -y nodejs npm && \
+    pip3 install --no-deps -r requirements.txt || true && \
+    pip3 install \
+        authlib==1.2.0 \
+        flask-assets==2.0 \
+        flask-login==0.6.2 \
+        flask-mail==0.9.1 \
+        flask-migrate==2.5.3 \
+        flask-sqlalchemy==2.5.1 \
+        flask-sslify==0.1.5 \
+        flask-seasurf==1.1.1 \
+        flask-session==0.4.0 \
+        flask==2.2.5 \
+        flask-session-captcha==1.3.0 \
+        jinja2==3.1.3 \
+        pyyaml==6.0.1 \
+        sqlalchemy==1.4.51 \
+        bcrypt==4.1.2 \
+        bravado-core==5.17.1 \
+        certifi==2023.11.17 \
+        cffi==1.15.1 \
+        configobj==5.0.8 \
+        cryptography==42.0.2 \
+        cssmin==0.2.0 \
+        dnspython \
+        gunicorn==20.1.0 \
+        itsdangerous==2.1.2 \
+        jsonschema==3.2.0 \
+        lima==0.5 \
+        mysqlclient==2.2.1 \
+        passlib==1.7.4 \
+        pyasn1==0.4.8 \
+        pyotp==2.8.0 \
+        python-ldap==3.4.3 \
+        python3-saml==1.15.0 \
+        pytimeparse==1.1.8 \
+        pytz==2022.7.1 \
+        qrcode==7.3.1 \
+        requests==2.31.0 \
+        rjsmin==1.2.1 \
+        webcolors==1.12 \
+        werkzeug==2.3.8 \
+        zipp==3.11.0 \
+        rcssmin==1.1.1 \
+        zxcvbn==4.4.28
+
+# Install frontend dependencies and build assets
+RUN npm install yarn -g && \
+    npm install --save @fortawesome/fontawesome-free && \
+    if [ -f yarn.lock ]; then yarn install --ignore-engines; fi && \
+    if [ -f package.json ]; then npm install; fi && \
+    mkdir -p powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/css && \
+    mkdir -p powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/js && \
+    mkdir -p powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/webfonts && \
+    npm list @fortawesome/fontawesome-free || echo "FontAwesome not found in package.json" && \
+    if [ -d node_modules/@fortawesome/fontawesome-free ]; then \
+        cp -r node_modules/@fortawesome/fontawesome-free/css/* powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/css/ 2>/dev/null || true; \
+        cp -r node_modules/@fortawesome/fontawesome-free/js/* powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/js/ 2>/dev/null || true; \
+        cp -r node_modules/@fortawesome/fontawesome-free/webfonts/* powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/webfonts/ 2>/dev/null || true; \
+    fi && \
+    # Fallback: create all.css if it doesn't exist
+    if [ ! -f powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/css/all.css ]; then \
+        touch powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/css/all.css; \
+        echo "/* FontAwesome CSS placeholder - install FontAwesome to get full styles */" > powerdnsadmin/static/node_modules/@fortawesome/fontawesome-free/css/all.css; \
+    fi && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /root/.cache
+
+# Create production configuration at build time
+RUN mkdir -p /etc/powerdns-admin
+COPY production_config.py /etc/powerdns-admin/production_config.py
+
+# Create database initialization script at build time
+COPY init_db.py /opt/powerdns-admin/init_db.py
+
+# Create production-ready entrypoint script at build time
+COPY start.sh /opt/powerdns-admin/start.sh
+
+# Install gosu for proper user switching
+RUN apt-get update && \
+    apt-get install -y gosu netcat && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -r -s /bin/false pdnsadmin
+
+# Set permissions
+RUN chown -R pdnsadmin:pdnsadmin /opt/powerdns-admin && \
+    chmod +x /opt/powerdns-admin/start.sh && \
+    chmod +x /opt/powerdns-admin/init_db.py
+
+# Expose port
+EXPOSE 80
+
+# Start with production server
+ENTRYPOINT ["/opt/powerdns-admin/start.sh"]
