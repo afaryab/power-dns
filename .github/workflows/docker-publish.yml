@@ -21,24 +21,41 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Get next version
+      - name: Get next available version tag
         id: get_version
         run: |
           # Get latest tag or default to v0.0.0
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Latest tag: $LATEST_TAG"
-          # Bump patch version
-          VERSION=$(echo $LATEST_TAG | awk -F. -v OFS=. '{$NF++; print}')
-          echo "Next version: $VERSION"
+          # Try to find a free tag by incrementing patch
+          BASE=${LATEST_TAG%.*}
+          PATCH=${LATEST_TAG##*.}
+          for i in $(seq 0 20); do
+            NEXT_PATCH=$((PATCH + 1 + i))
+            VERSION="$BASE.$NEXT_PATCH"
+            if ! git rev-parse "$VERSION" >/dev/null 2>&1; then
+              echo "Next version: $VERSION"
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          done
+          # If all next 20 tags exist, use the last one and force
+          VERSION="$BASE.$((PATCH + 1 + 20))"
+          echo "Next version (force): $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
 
-      - name: Create and push git tag
+      - name: Create and push git tag (force only if needed)
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git tag ${{ steps.get_version.outputs.version }}
-          git push origin ${{ steps.get_version.outputs.version }}
+          if git rev-parse ${{ steps.get_version.outputs.version }} >/dev/null 2>&1; then
+            git tag -f ${{ steps.get_version.outputs.version }}
+            git push --force origin ${{ steps.get_version.outputs.version }}
+          else
+            git tag ${{ steps.get_version.outputs.version }}
+            git push origin ${{ steps.get_version.outputs.version }}
+          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
